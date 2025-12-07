@@ -55,7 +55,7 @@ Modern online learning platforms often lack academic-focused tools and intellige
   * Fiber (Golang Services)
   * Flask (AI Microservice)
 
-### **Realtime Communication (Updated)**
+### **Realtime Communication**
 
 * **Gorilla WebSocket (Go)** – high-performance real-time messaging
 * **WebRTC** – voice & video calling
