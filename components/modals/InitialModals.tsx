@@ -59,7 +59,7 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
     setIsLoading(true);
 
     try {
-      // 1️⃣ Upload image to ImgBB using Axios
+       
       const formData = new FormData();
       formData.append("image", values.imageFile);
 
@@ -69,12 +69,11 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      if (!imgbbRes.data.success) throw new Error("ImgBB upload failed");
+      if (!imgbbRes.data.success) throw new Error("upload failed");
 
       const imageUrl = imgbbRes.data.data.url;
 
-      // 2️⃣ Send server data to backend with profileId using Axios
-      const serverRes = await axios.post("http://localhost:8080/servers", {
+      const serverRes = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/servers`, {
         name: values.name,
         imageURL: imageUrl,
         profileID: currentUser.profileId,
