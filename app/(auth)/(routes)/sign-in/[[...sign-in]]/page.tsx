@@ -1,13 +1,22 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "@/auth/auth";
+import axios, { AxiosError } from "axios";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff } from "lucide-react";
 
 const SignInPage: React.FC = (): React.JSX.Element => {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,77 +25,104 @@ const SignInPage: React.FC = (): React.JSX.Element => {
     setLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password);
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/login`, {
+        email,
+        password
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push("/");
+      const { token } = response.data;
+
+      if (token) {
+      
+        localStorage.setItem("jwt", token);
+
+        // Redirect to home page
+        router.push("/");
+      } else {
+        setError("Invalid login credentials");
+      }
+    } catch (err) {
+       const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || "Login failed");
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#313338]">
-      <form
-        onSubmit={handleSignIn}
-        className="w-full max-w-md bg-[#2b2d31] p-8 rounded-md shadow-xl"
-      >
-        <h2 className="text-2xl font-semibold text-center text-white mb-2">
-          Welcome back!
-        </h2>
-        <p className="text-center text-sm text-gray-400 mb-6">
-          We are so excited to see you again!
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#313338] px-4">
+      <Card className="w-full max-w-md bg-[#2b2d31] border-none shadow-xl text-white">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-semibold">Welcome back!</CardTitle>
+          <CardDescription className="text-gray-400">
+            We are so excited to see you again!
+          </CardDescription>
+        </CardHeader>
 
-        {error && (
-          <div className="mb-4 text-sm text-red-400 bg-red-900/20 p-2 rounded">
-            {error}
-          </div>
-        )}
+        <CardContent>
+          <form onSubmit={handleSignIn} className="space-y-5">
+            {error && (
+              <Alert className="bg-red-900/20 border-red-500 text-red-400">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        <div className="mb-4">
-          <label className="block text-xs font-semibold uppercase text-gray-400 mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-[#1e1f22] border border-[#1e1f22] rounded px-3 py-2 text-white focus:outline-none focus:border-[#5865F2]"
-          />
-        </div>
+            {/* Email */}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-gray-400">Email</Label>
+              <Input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-[#1e1f22] border-none"
+              />
+            </div>
 
-        <div className="mb-6">
-          <label className="block text-xs font-semibold uppercase text-gray-400 mb-1">
-            Password
-          </label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-[#1e1f22] border border-[#1e1f22] rounded px-3 py-2 text-white focus:outline-none focus:border-[#5865F2]"
-          />
-        </div>
+            {/* Password */}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase text-gray-400">Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-[#1e1f22] border-none pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-2.5 text-gray-400"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white py-2 rounded font-medium transition disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Log In"}
-        </button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white"
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </Button>
+          </form>
 
-        <p className="text-xs text-gray-400 mt-4">
-          Need an account?{" "}
-          <span className="text-[#5865F2] hover:underline cursor-pointer">
-            Register
-          </span>
-        </p>
-      </form>
+          <p className="mt-4 text-center text-sm text-gray-400">
+            Need an account?{" "}
+            <button
+              onClick={() => router.push("/sign-up")}
+              className="text-indigo-400 hover:underline"
+            >
+              Register
+            </button>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 
 const SignUpSchema = z
   .object({
@@ -70,25 +71,51 @@ const SignUp: React.FC = (): React.JSX.Element => {
 
   const strength = getStrength(password);
 
-  const onSubmit = async (data: SignUpForm) => {
-    setMessage('');
-    setApiError(false);
+const onSubmit = async (data: SignUpForm) => {
+  setMessage('');
+  setApiError(false);
 
-    const { error } = await signUp(data.email, data.password);
+  try {
+    // Step 1: Sign up with Supabase Auth
+    const { error: supabaseError} = await signUp(data.email, data.password);
 
-    if (error) {
-      setMessage(error.message);
+    if (supabaseError) {
+      setMessage(supabaseError.message);
       setApiError(true);
-    } else {
+      return;
+    }
+
+    // Step 2: POST to your Fiber backend to create profile
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/signup`, {
+      email: data.email,
+      password: data.password, 
+    });
+
+    if (response.status === 201 || response.status === 200) {
       setMessage('Sign up successful! Redirecting to sign in...');
       setApiError(false);
 
-      // Auto redirect after success
       setTimeout(() => {
         router.push('/sign-in');
       }, 1500);
+    } else {
+      setMessage(response.data.error || 'Failed to create profile in backend');
+      setApiError(true);
     }
-  };
+  } catch (err: unknown) {
+  // Type guard for AxiosError
+  if (axios.isAxiosError(err)) {
+    setMessage(err.response?.data?.error || err.message || 'Something went wrong');
+  } else if (err instanceof Error) {
+    setMessage(err.message);
+  } else {
+    setMessage('Something went wrong');
+  }
+  setApiError(true);
+}
+
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#313338] px-4">

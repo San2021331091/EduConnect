@@ -69,7 +69,6 @@ Modern online learning platforms often lack academic-focused tools and intellige
 ### **Authentication & Database**
 
 * Supabase (JWT Auth + PostgreSQL)
-* bcrypt for password hashing
 * PostgreSQL (Neon)
 * GORM (Go)
 
