@@ -77,43 +77,48 @@ const onSubmit = async (data: SignUpForm) => {
 
   try {
     // Step 1: Sign up with Supabase Auth
-    const { error: supabaseError} = await signUp(data.email, data.password);
+    const { data: supabaseData, error } = await signUp(
+      data.email,
+      data.password
+    );
 
-    if (supabaseError) {
-      setMessage(supabaseError.message);
+    if (error) {
+      setMessage(error.message);
       setApiError(true);
       return;
     }
 
-    // Step 2: POST to your Fiber backend to create profile
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/signup`, {
+    const userId = supabaseData?.user?.id;
+
+    if (!userId) {
+      setMessage('Failed to get user ID from Supabase');
+      setApiError(true);
+      return;
+    }
+
+    // Step 2: Create profile in Fiber backend
+    await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/signup`, {
+      userId,
       email: data.email,
-      password: data.password, 
     });
 
-    if (response.status === 201 || response.status === 200) {
-      setMessage('Sign up successful! Redirecting to sign in...');
-      setApiError(false);
+    setMessage('Sign up successful! Redirecting to sign in...');
+    setApiError(false);
 
-      setTimeout(() => {
-        router.push('/sign-in');
-      }, 1500);
-    } else {
-      setMessage(response.data.error || 'Failed to create profile in backend');
-      setApiError(true);
-    }
+    setTimeout(() => {
+      router.push('/sign-in');
+    }, 1500);
+
   } catch (err: unknown) {
-  // Type guard for AxiosError
-  if (axios.isAxiosError(err)) {
-    setMessage(err.response?.data?.error || err.message || 'Something went wrong');
-  } else if (err instanceof Error) {
-    setMessage(err.message);
-  } else {
-    setMessage('Something went wrong');
+    if (axios.isAxiosError(err)) {
+      setMessage(err.response?.data?.error || err.message);
+    } else if (err instanceof Error) {
+      setMessage(err.message);
+    } else {
+      setMessage('Something went wrong');
+    }
+    setApiError(true);
   }
-  setApiError(true);
-}
-
 };
 
 

@@ -29,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
 
-// 1️⃣ Form schema
 const formSchema = z.object({
   name: z.string().min(1, "Server name is required"),
   imageFile: z.any().refine((file) => file instanceof File, {
@@ -38,10 +37,12 @@ const formSchema = z.object({
 });
 
 interface InitialModalsProps {
-  currentUser: { profileId: string };
+  currentUser: { UserID: string };
 }
 
-const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element => {
+const InitialModals = ({
+  currentUser,
+}: InitialModalsProps): React.JSX.Element => {
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -59,7 +60,6 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
     setIsLoading(true);
 
     try {
-       
       const formData = new FormData();
       formData.append("image", values.imageFile);
 
@@ -73,11 +73,19 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
 
       const imageUrl = imgbbRes.data.data.url;
 
-      const serverRes = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/servers`, {
-        name: values.name,
-        imageURL: imageUrl,
-        profileID: currentUser.profileId,
-      });
+      const serverRes = await axios.post(
+        `${process.env.NEXT_PUBLIC_FIBER_URL}/servers`,
+        {
+          name: values.name,
+          imageURL: imageUrl,
+          profileID: currentUser.UserID,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+          },
+        }
+      );
 
       if (serverRes.status !== 200 && serverRes.status !== 201) {
         throw new Error("Failed to create server");
@@ -86,7 +94,6 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
       alert("Server created successfully!");
       form.reset();
       setPreview(null);
-
     } catch (err: unknown) {
       console.error(err);
       alert("Error creating server. Check console for details.");
@@ -108,7 +115,10 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="px-6 space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="px-6 space-y-6"
+          >
             {/* IMAGE PICKER */}
             <FormField
               control={form.control}

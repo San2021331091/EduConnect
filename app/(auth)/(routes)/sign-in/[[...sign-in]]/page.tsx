@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 
+import { signIn } from "@/auth/auth"; // ✅ Supabase sign in
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff } from "lucide-react";
@@ -26,35 +34,42 @@ const SignInPage: React.FC = (): React.JSX.Element => {
     setError(null);
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_FIBER_URL}/login`, {
-        email,
-        password
-      });
+      const { data, error: supabaseError } = await signIn(email, password);
 
-      const { token } = response.data;
-
-      if (token) {
-      
-        localStorage.setItem("jwt", token);
-
-        // Redirect to home page
-        router.push("/");
-      } else {
-        setError("Invalid login credentials");
+      if (supabaseError || !data?.session) {
+        setError(supabaseError?.message || "Invalid login credentials");
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-       const error = err as AxiosError<{ error: string }>;
-      setError(error.response?.data?.error || "Login failed");
-    }
 
-    setLoading(false);
+      // Send Supabase token to Fiber login
+      const fiberRes = await axios.post(
+        `${process.env.NEXT_PUBLIC_FIBER_URL}/login`,
+        {
+          token: data.session.access_token,
+        }
+      );
+
+      // Store Fiber JWT for protected APIs
+      localStorage.setItem("jwt", fiberRes.data.token);
+
+      // 4️⃣ Redirect
+      router.push("/");
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#313338] px-4">
       <Card className="w-full max-w-md bg-[#2b2d31] border-none shadow-xl text-white">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-semibold">Welcome back!</CardTitle>
+          <CardTitle className="text-2xl font-semibold">
+            Welcome back!
+          </CardTitle>
           <CardDescription className="text-gray-400">
             We are so excited to see you again!
           </CardDescription>
@@ -83,7 +98,9 @@ const SignInPage: React.FC = (): React.JSX.Element => {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label className="text-xs uppercase text-gray-400">Password</Label>
+              <Label className="text-xs uppercase text-gray-400">
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
