@@ -4,6 +4,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import axios from "axios";
 
 import {
   Dialog,
@@ -36,7 +37,6 @@ const formSchema = z.object({
   }),
 });
 
-
 interface InitialModalsProps {
   currentUser: { profileId: string };
 }
@@ -59,37 +59,30 @@ const InitialModals = ({ currentUser }: InitialModalsProps): React.JSX.Element =
     setIsLoading(true);
 
     try {
-      // 1️⃣ Upload image to ImgBB
+      // 1️⃣ Upload image to ImgBB using Axios
       const formData = new FormData();
       formData.append("image", values.imageFile);
 
-      const imgbbRes = await fetch(
+      const imgbbRes = await axios.post(
         `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const imgbbData = await imgbbRes.json();
-      if (!imgbbData.success) throw new Error("ImgBB upload failed");
+      if (!imgbbRes.data.success) throw new Error("ImgBB upload failed");
 
-      const imageUrl = imgbbData.data.url;
+      const imageUrl = imgbbRes.data.data.url;
 
-      // 2️⃣ Send server data to backend with profileId
-      const serverRes = await fetch("http://localhost:8080/servers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: values.name,
-          imageURL: imageUrl,
-          profileID: currentUser.profileId, 
-        }),
+      // 2️⃣ Send server data to backend with profileId using Axios
+      const serverRes = await axios.post("http://localhost:8080/servers", {
+        name: values.name,
+        imageURL: imageUrl,
+        profileID: currentUser.profileId,
       });
 
-      if (!serverRes.ok) throw new Error("Failed to create server");
+      if (serverRes.status !== 200 && serverRes.status !== 201) {
+        throw new Error("Failed to create server");
+      }
 
       alert("Server created successfully!");
       form.reset();
