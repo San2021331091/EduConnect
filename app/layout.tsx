@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,24 +19,24 @@ export const metadata: Metadata = {
   description: "A modern app for students",
 };
 
-const RootLayout = ({
+export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) => {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en"  className="dark" suppressHydrationWarning>
-     
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem={false}
-        storageKey="educonnect-theme"
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased ${cn("bg-white dark:bg-[#313338]" )}`}
       >
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          forcedTheme="light"
+          enableSystem = {false}
+          storageKey="educonnect-theme"
+        >
           {children}
-        </body>
-      </ThemeProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
-};
-
-export default RootLayout;
+}
