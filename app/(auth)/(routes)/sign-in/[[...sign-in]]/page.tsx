@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 
-import { signIn } from "@/auth/auth"; // ✅ Supabase sign in
+import { signIn } from "@/auth/auth"; 
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +22,10 @@ import { Eye, EyeOff } from "lucide-react";
 const SignInPage: React.FC = (): React.JSX.Element => {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -53,7 +53,7 @@ const SignInPage: React.FC = (): React.JSX.Element => {
       // Store Fiber JWT for protected APIs
       localStorage.setItem("jwt", fiberRes.data.token);
 
-      // 4️⃣ Redirect
+ 
       router.push("/");
     } catch (err) {
       const error = err as AxiosError<{ error: string }>;

@@ -28,6 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Alert, AlertDescription } from "../ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(1, "Server name is required"),
@@ -53,7 +55,7 @@ const InitialModals = ({
       imageFile: undefined,
     },
   });
-
+  const router = useRouter();
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!values.imageFile) return;
 
@@ -91,12 +93,17 @@ const InitialModals = ({
         throw new Error("Failed to create server");
       }
 
-      alert("Server created successfully!");
+      <Alert className="border-green-500 text-green-400 bg-transparent">
+        <AlertDescription>
+          Your EduConnect Server has been created successfully.
+        </AlertDescription>
+      </Alert>;
       form.reset();
       setPreview(null);
+      router.push(`/servers/${currentUser.UserID}`);
     } catch (err: unknown) {
       console.error(err);
-      alert("Error creating server. Check console for details.");
+      alert("Error creating server.");
     } finally {
       setIsLoading(false);
     }
@@ -191,16 +198,7 @@ const InitialModals = ({
             />
 
             {/* FOOTER */}
-            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pb-6">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-[#B5BAC1] hover:bg-[#2B2D31]"
-                disabled={isLoading}
-              >
-                Back
-              </Button>
-
+            <DialogFooter className="flex justify-end pb-6">
               <Button
                 type="submit"
                 disabled={isLoading}
