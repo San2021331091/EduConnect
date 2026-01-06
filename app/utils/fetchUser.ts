@@ -1,10 +1,10 @@
 'use client';
+import { getUser } from '@/auth/auth';
 import { User } from '../model/user/user';
-import { supabase } from '@/supabase/supabase-client';
 
 export const fetchUser = async (): Promise<User | null> => {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await getUser();
 
     if (error) {
       console.error("Error fetching user:", error);
@@ -16,8 +16,8 @@ export const fetchUser = async (): Promise<User | null> => {
     if (!user) return null;
 
     const localUser: User = {
-      UserID: user.id,
-      Email: user.email || '',
+      userID: user.id,
+      email: user.email || '',
   
     };
   

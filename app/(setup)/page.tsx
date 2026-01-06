@@ -1,57 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import InitialModals from "@/components/modals/InitialModals";
 import { CircularProgress } from "@/components/ui/circular-progress";
+
 import { fetchUser } from "../utils/fetchUser";
-import { User } from "../model/user/user";
+import { User } from "@/app/model/user/user";
 
-const SetUpPage: React.FC = () => {
+const HomePage: React.FC = () => {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(10);
+  const ran = useRef<boolean>(false);
 
-  useEffect(() => {
-    // Smooth progress animation
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev < 90 ? prev + 2 : prev));
-    }, 120);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-    const getUser = async () => {
-      const user = await fetchUser();
+  useEffect((): void => {
+    if (ran.current) return;
+    ran.current = true;
 
-      if (!user) {
-        router.push("/sign-in");
-        return;
-      }
+    const init = async (): Promise<void> => {
+      try {
+        const currentUser = await fetchUser();
 
-      setTimeout(() => {
-        setProgress(100);
-        setCurrentUser(user);
+        if (!currentUser) {
+          router.replace("/sign-in");
+          return;
+        }
+
+        setUser(currentUser);
         setLoading(false);
-        clearInterval(interval);
-      }, 800);
+      } catch {
+        router.replace("/sign-in");
+      }
     };
 
-    getUser();
-    return () => clearInterval(interval);
+    void init();
   }, [router]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#1E1F22]">
-        <CircularProgress value={progress} size={80} />
-        <p className="mt-4 text-sm text-[#B5BAC1]">
-          Setting up your workspace…
-        </p>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#1E1F22]">
+        <CircularProgress value={60} size={80} />
       </div>
     );
+  }
 
-  if (!currentUser) return null;
-
-  return <InitialModals currentUser={currentUser} />;
+  return <InitialModals currentUser={user!} />;
 };
 
-export default SetUpPage;
+export default HomePage;

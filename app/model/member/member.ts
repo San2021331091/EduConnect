@@ -4,13 +4,13 @@ import { User } from "../user/user";
 export type MemberRole = "ADMIN" | "MODERATOR" | "GUEST";
 
 export interface Member {
-  id: string;             // UUID
-  role: MemberRole;       
+  id: string;
+  role: MemberRole;
   profileID: string;
   userID: string;
-  profile: User;       
+  profile?: User;
   serverID: string;
-  server: Server;        
+  server?: Server;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }

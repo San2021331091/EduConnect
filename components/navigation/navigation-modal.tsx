@@ -3,7 +3,7 @@
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 
 import {
@@ -29,9 +29,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription } from "../ui/alert";
 import { User } from "@/app/model/user/user";
-import { fetchServers } from "@/app/utils/fetchServers";
+
+/* ---------------- SCHEMA ---------------- */
 
 const formSchema = z.object({
   name: z.string().min(1, "Server name is required"),
@@ -40,16 +40,24 @@ const formSchema = z.object({
   }),
 });
 
-interface InitialModalsProps {
+/* ---------------- PROPS ---------------- */
+
+interface NavigationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   currentUser: User;
 }
 
-const InitialModals = ({
+/* ---------------- COMPONENT ---------------- */
+
+const NavigationModal = ({
+  isOpen,
+  onClose,
   currentUser,
-}: InitialModalsProps): React.JSX.Element => {
+}: NavigationModalProps) => {
   const [preview, setPreview] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [hasServers, setHasServers] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,21 +66,6 @@ const InitialModals = ({
       imageFile: undefined,
     },
   });
-
-  const router = useRouter();
-
-  // ✅ Check if user has existing servers
-  useEffect(() => {
-    const checkServers = async () => {
-      try {
-        const servers = await fetchServers();
-        setHasServers(Array.isArray(servers) && servers.length > 0);
-      } catch {
-        setHasServers(false);
-      }
-    };
-    checkServers();
-  }, []);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!values.imageFile) return;
@@ -89,11 +82,14 @@ const InitialModals = ({
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      if (!imgbbRes.data.success) throw new Error("upload failed");
-
       const imageUrl = imgbbRes.data.data.url;
+      const token = localStorage.getItem("jwt")?.trim();
+      if (!token) {
+        alert("Token not found");
+        return;
+      }
 
-      const serverRes = await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_FIBER_URL}/servers`,
         {
           Name: values.name,
@@ -102,34 +98,26 @@ const InitialModals = ({
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-
-      if (serverRes.status !== 200 && serverRes.status !== 201) {
-        throw new Error("Failed to create server");
-      }
-
-      <Alert className="border-green-500 text-green-400 bg-transparent">
-        <AlertDescription>
-          Your EduConnect Server has been created successfully.
-        </AlertDescription>
-      </Alert>;
+      console.log(values.name + " "+imageUrl+" "+currentUser.userID);
 
       form.reset();
       setPreview(null);
+      onClose();
       router.push(`/servers/${currentUser.userID}`);
-    } catch (err: unknown) {
-      console.error(err);
-      alert("Error creating server.");
+    } catch (error) {
+      console.error(error);
+      alert("Error creating server");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md bg-[#313338] text-[#F2F3F5] p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-center text-2xl font-bold text-white">
@@ -151,36 +139,38 @@ const InitialModals = ({
               name="imageFile"
               render={({ field }) => (
                 <FormItem className="flex flex-col items-center">
-                  <FormLabel className="sr-only">Server Image</FormLabel>
                   <FormControl>
-                    <div className="flex flex-col items-center">
-                      <label className="relative cursor-pointer group">
-                        <Avatar className="h-24 w-24 border-4 border-[#2B2D31] bg-[#1E1F22]">
-                          <AvatarImage src={preview ?? undefined} />
-                          <AvatarFallback className="text-xl text-[#5865F2]">
-                            EC
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition">
-                          <Upload className="h-6 w-6 text-white" />
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            field.onChange(file);
-                            setPreview(URL.createObjectURL(file));
-                          }}
-                        />
-                      </label>
-                      <p className="mt-2 text-xs text-[#B5BAC1]">
-                        Upload Server Image
-                      </p>
-                    </div>
+                    <label className="relative cursor-pointer group">
+                      <Avatar className="h-24 w-24 border-4 border-[#2B2D31] bg-[#1E1F22]">
+                        <AvatarImage src={preview ?? undefined} />
+                        <AvatarFallback className="text-xl text-[#5865F2]">
+                          EC
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition">
+                        <Upload className="h-6 w-6 text-white" />
+                      </div>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          field.onChange(file);
+                          setPreview(URL.createObjectURL(file));
+                        }}
+                      />
+                    </label>
                   </FormControl>
+
+                  {/* TEXT MUST BE OUTSIDE FormControl */}
+                  <p className="mt-2 text-xs text-[#B5BAC1]">
+                    Upload Server Image
+                  </p>
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -198,17 +188,9 @@ const InitialModals = ({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="EduConnect Study Group"
                       disabled={isLoading}
-                      className="
-                        bg-[#1E1F22]
-                        border border-[#2B2D31]
-                        text-[#F2F3F5]
-                        placeholder:text-[#6D6F78]
-                        focus-visible:ring-[#5865F2]
-                        focus-visible:ring-1
-                        focus-visible:ring-offset-0
-                      "
+                      placeholder="EduConnect Study Group"
+                      className="bg-[#1E1F22] border border-[#2B2D31] text-[#F2F3F5]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -217,25 +199,11 @@ const InitialModals = ({
             />
 
             {/* FOOTER */}
-            <DialogFooter className="flex justify-between pb-6">
-              {/* GO TO YOUR SERVERS BUTTON */}
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={!hasServers}
-                onClick={() =>
-                  router.push(`/servers/${currentUser.userID}`)
-                }
-                className="bg-[#2B2D31] text-[#F2F3F5] hover:bg-[#3A3C41]"
-              >
-                Go to your servers
-              </Button>
-
-              {/* CREATE SERVER BUTTON */}
+            <DialogFooter className="pb-6">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold"
+                className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold w-full"
               >
                 {isLoading ? "Creating..." : "Create Server"}
               </Button>
@@ -247,4 +215,4 @@ const InitialModals = ({
   );
 };
 
-export default InitialModals;
+export default NavigationModal;

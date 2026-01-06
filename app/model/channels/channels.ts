@@ -1,18 +1,17 @@
 import { Server } from "../server/server";
 import { User } from "../user/user";
 
- export type ChannelType = "TEXT" | "AUDIO" | "VIDEO";
-
+export type ChannelType = "TEXT" | "AUDIO" | "VIDEO";
 
 export interface Channel {
-  id: string;            
+  id: string;
   name: string;
-  type: ChannelType;     
-  profileID: string;
-  profile: User;      
+  type: ChannelType;
+  profileID?: string;
+  profile?: User;
   serverID: string;
-  server: Server;       
+  server?: Server;
   createdAt: Date;
-  updatedAt: Date;
-  userID: string;
+  updatedAt?: Date;
+  userID?: string;
 }
