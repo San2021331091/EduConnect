@@ -92,7 +92,7 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
       {/* ================= CHANNEL SIDEBAR ================= */}
       <aside className="w-64 border-r bg-muted/40">
         <div className="p-4 font-semibold">
-          <ServerDropdown serverName={server.name} />
+          <ServerDropdown server={server} />
         </div>
 
         <Separator />

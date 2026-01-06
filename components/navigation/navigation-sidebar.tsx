@@ -16,7 +16,7 @@ import { fetchServers } from "@/app/utils/fetchServers";
 import { Server } from "@/app/model/server/server";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import NavigationModal from "./navigation-modal";
+import NavigationModal from "../modals/navigation-modal";
 import { User } from "@/app/model/user/user";
 
 const NavigationSidebar: React.FC = () => {
