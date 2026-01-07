@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,12 @@ import ServerSettingsModal from "./modals/ServerSettingsModal";
 import ManageMembersModal from "./modals/ManageMembersModal";
 import CreateChannelModal from "./modals/CreateChannelModal";
 import DeleteServerModal from "./modals/DeleteServerModal";
+import LeaveServerModal from "./modals/LeaveServerModal";
+
 import { Server } from "@/app/model/server/server";
 import { fetchUser } from "@/app/utils/fetchUser";
 import { MemberRole } from "@/app/model/member/member";
+import { useRouter } from "next/navigation";
 
 interface ServerDropdownProps {
   server: Server;
@@ -36,7 +39,8 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
   const [isManageMembersOpen, setIsManageMembersOpen] = useState(false);
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
   const [isDeleteServerOpen, setIsDeleteServerOpen] = useState(false);
-
+  const [isLeaveServerOpen, setIsLeaveServerOpen] = useState(false);
+  const router = useRouter();
   const [memberRole, setMemberRole] = useState<MemberRole>(MemberRole.GUEST);
 
   // ====================== GET CURRENT USER ======================
@@ -67,6 +71,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   // ====================== MENU ITEMS ======================
   const menuItems = [];
 
@@ -102,23 +107,14 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         danger: true,
       }
     );
-  } else if (memberRole === "MODERATOR") {
-    menuItems.push(
-     
-      {
-        label: "Create Channel",
-        icon: <PlusCircle className="h-4 w-4 mr-2" />,
-        onClick: () => setIsCreateChannelOpen(true),
-      }
-    );
   }
 
-  // ✅ Only MODERATOR or GUEST can leave the server
+  // Only MODERATOR or GUEST can leave the server
   if (memberRole !== "ADMIN") {
     menuItems.push({
       label: "Leave Server",
       icon: <LogOut className="h-4 w-4 mr-2" />,
-      onClick: () => alert(`Left ${serverName}`),
+      onClick: () => setIsLeaveServerOpen(true),
       danger: true,
     });
   }
@@ -177,13 +173,20 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
       <CreateChannelModal
         isOpen={isCreateChannelOpen}
         onClose={() => setIsCreateChannelOpen(false)}
-        onCreate={(name, type) => alert(`Created ${type} channel: ${name}`)}
+        serverID={server.id}
       />
       <DeleteServerModal
         isOpen={isDeleteServerOpen}
         onClose={() => setIsDeleteServerOpen(false)}
         serverName={serverName}
-        onDelete={() => alert(`Server ${serverName} deleted!`)}
+        serverID={server.id}
+      />
+      <LeaveServerModal
+        isOpen={isLeaveServerOpen}
+        onClose={() => setIsLeaveServerOpen(false)}
+        serverName={serverName}
+        serverMembers={server.members}
+        onLeave={() => server? router.push(`/servers/${server.id}`) : router.push("/") }
       />
     </div>
   );
