@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,14 +57,16 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
   // ====================== CLICK OUTSIDE ======================
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   // ====================== MENU ITEMS ======================
   const menuItems = [];
 
@@ -75,6 +77,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
     onClick: () => setIsInviteOpen(true),
   });
 
+  // Admin-only items
   if (memberRole === "ADMIN") {
     menuItems.push(
       {
@@ -101,11 +104,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
     );
   } else if (memberRole === "MODERATOR") {
     menuItems.push(
-      {
-        label: "Manage Members",
-        icon: <Users className="h-4 w-4 mr-2" />,
-        onClick: () => setIsManageMembersOpen(true),
-      },
+     
       {
         label: "Create Channel",
         icon: <PlusCircle className="h-4 w-4 mr-2" />,
@@ -114,20 +113,22 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
     );
   }
 
-  // Everyone can leave server
-  menuItems.push({
-    label: "Leave Server",
-    icon: <LogOut className="h-4 w-4 mr-2" />,
-    onClick: () => alert(`Left ${serverName}`),
-    danger: true,
-  });
+  // ✅ Only MODERATOR or GUEST can leave the server
+  if (memberRole !== "ADMIN") {
+    menuItems.push({
+      label: "Leave Server",
+      icon: <LogOut className="h-4 w-4 mr-2" />,
+      onClick: () => alert(`Left ${serverName}`),
+      danger: true,
+    });
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
         variant="ghost"
         className="w-full flex justify-between items-center px-4 py-2"
-        onClick={() => setOpen(prev => !prev)}
+        onClick={() => setOpen((prev) => !prev)}
       >
         {serverName}
         <ChevronDown
@@ -166,6 +167,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         serverName={serverName}
+        serverId={server.id}
       />
       <ManageMembersModal
         isOpen={isManageMembersOpen}

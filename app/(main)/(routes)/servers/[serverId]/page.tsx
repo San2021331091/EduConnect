@@ -123,7 +123,7 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
               className="w-full justify-start mb-1"
               onClick={() => setActiveChannelId(channel.id)}
             >
-              # {channel.name}
+              {channel.name.toUpperCase()}
             </Button>
           ))}
         </ScrollArea>
@@ -133,7 +133,7 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
       <main className="flex flex-1 flex-col">
         {/* HEADER */}
         <div className="h-12 flex items-center px-4 border-b">
-          <span className="font-semibold text-sm"># {activeChannel?.name}</span>
+          <span className="font-semibold text-sm"> {activeChannel?.name.toUpperCase()}</span>
         </div>
 
         {/* MESSAGES */}
@@ -205,7 +205,7 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
             <Input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={`Message #${activeChannel?.name}`}
+              placeholder={"Type a new message"}
               className="border-0 bg-transparent focus-visible:ring-0"
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
@@ -218,7 +218,7 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
             )}
 
             {/* SEND */}
-            <Button size="icon" onClick={sendMessage}>
+            <Button size="icon" onClick={sendMessage} className="bg-blue-600! text-white!">
               <Send className="h-4 w-4" />
             </Button>
           </div>
