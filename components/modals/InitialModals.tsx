@@ -60,19 +60,29 @@ const InitialModals = ({
   });
 
   const router = useRouter();
-
-  // ✅ Check if user has existing servers
-  useEffect(() => {
-    const checkServers = async () => {
-      try {
-        const servers = await fetchServers();
-        setHasServers(Array.isArray(servers) && servers.length > 0);
-      } catch {
+useEffect(() => {
+  const checkServers = async () => {
+    try {
+      const servers = await fetchServers();
+      if (!Array.isArray(servers)) {
         setHasServers(false);
+        return;
       }
-    };
-    checkServers();
-  }, []);
+
+      const userHasServer = servers.some((server) =>
+        server.members.some((member) => member.userID === currentUser.userID)
+      );
+
+      setHasServers(userHasServer);
+    } catch (err) {
+      console.error("Error checking servers:", err);
+      setHasServers(false);
+    }
+  };
+
+  checkServers();
+}, [currentUser.userID]);
+
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!values.imageFile) return;

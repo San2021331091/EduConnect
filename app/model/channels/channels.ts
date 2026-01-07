@@ -1,7 +1,7 @@
 import { Server } from "../server/server";
 import { User } from "../user/user";
 
-export type ChannelType = "TEXT" | "AUDIO" | "VIDEO";
+export enum ChannelType {TEXT = "TEXT" ,AUDIO= "AUDIO" ,VIDEO= "VIDEO"};
 
 export interface Channel {
   id: string;

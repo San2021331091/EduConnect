@@ -1,38 +1,36 @@
-// app/utils/fetchServerById.ts
 import axios from "axios";
 import { Server } from "../model/server/server";
 
 export const fetchServerById = async (id: string): Promise<Server> => {
-  try {
-    const { data } = await axios.get<Server>(
-      `${process.env.NEXT_PUBLIC_FIBER_URL}/servers/${id}`,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+  const token = localStorage.getItem("jwt");
+  if (!token) throw new Error("JWT token not found");
 
-    return {
-      ...data,
-      createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt),
-      profile: {
-        ...data.profile,
-        createdAt: new Date(data.profile.createdAt),
-        updatedAt: new Date(data.profile.updatedAt),
-      },
-      members: data.members.map((m) => ({
-        ...m,
-        createdAt: new Date(m.createdAt),
-        updatedAt: new Date(m.updatedAt),
-      })),
-      channels: data.channels.map((c) => ({
-        ...c,
-        createdAt: new Date(c.createdAt),
-        updatedAt: new Date(c.updatedAt),
-      })),
-    };
-  } catch (err) {
-    console.error("Failed to fetch server:", err.response?.data || err.message);
-    throw err;
-  }
+  const { data } = await axios.get<Server>(`${process.env.NEXT_PUBLIC_FIBER_URL}/servers/${id}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return {
+    ...data,
+    createdAt: new Date(data.createdAt),
+    updatedAt: new Date(data.updatedAt),
+    profile: {
+      ...data.profile,
+      createdAt: new Date(data.profile.createdAt),
+      updatedAt: new Date(data.profile.updatedAt),
+    },
+    members: data.members.map(m => ({
+      ...m,
+      createdAt: new Date(m.createdAt),
+      updatedAt: new Date(m.updatedAt),
+    })),
+    channels: data.channels.map(c => ({
+      ...c,
+      createdAt: new Date(c.createdAt),
+      updatedAt: new Date(c.updatedAt),
+    })),
+  };
 };
+

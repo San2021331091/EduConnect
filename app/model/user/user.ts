@@ -7,7 +7,6 @@ export interface User {
   name?: string;
   imgURL?: string;
   email: string;
-  password?: string;
   servers?: Server[];
   members?: Member[];
   channels?: Channel[];

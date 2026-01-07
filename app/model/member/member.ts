@@ -1,7 +1,7 @@
 import { Server } from "../server/server";
 import { User } from "../user/user";
 
-export type MemberRole = "ADMIN" | "MODERATOR" | "GUEST";
+export enum MemberRole{ADMIN = "ADMIN" ,MODERATOR = "MODERATOR" , GUEST= "GUEST"};
 
 export interface Member {
   id: string;

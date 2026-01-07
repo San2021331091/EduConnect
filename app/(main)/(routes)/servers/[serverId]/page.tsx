@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { Plus, Send } from "lucide-react";
 import ServerDropdown from "@/components/ServerDropdown";
+import { CircularProgress } from "@/components/ui/circular-progress";
 
 const ServerIdPage: React.FC = (): React.JSX.Element => {
   const params = useParams() as { serverId: string };
@@ -76,11 +77,24 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
   };
 
   if (loading) {
-    return <div className="p-6 text-muted-foreground">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <CircularProgress
+          value={50}
+          size={60}
+          strokeWidth={6}
+          className="text-blue-500"
+        />
+      </div>
+    );
   }
 
   if (!server) {
-    return <div className="p-6">Server not found</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background text-muted-foreground">
+        Server not found
+      </div>
+    );
   }
 
   const activeChannel = server.channels.find((c) => c.id === activeChannelId);
