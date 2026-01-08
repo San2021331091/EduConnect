@@ -186,7 +186,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         onClose={() => setIsLeaveServerOpen(false)}
         serverName={serverName}
         serverMembers={server.members}
-        onLeave={() => server? router.push(`/servers/${server.id}`) : router.push("/") }
+        onLeave={() => router.push("/") }
       />
     </div>
   );

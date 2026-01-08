@@ -10,20 +10,32 @@ interface AudioParticipant {
   id: string;
   name: string;
   muted?: boolean;
+  stream?: MediaStream;
 }
 
 interface AudioChannelProps {
-  participants?: AudioParticipant[];
+  channelId: string;
+  userId: string;
+  userName: string;
 }
 
-const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
+// ✅ STUN + free TURN server
+const ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "turn:numb.viagenie.ca", username: "webrtc@live.com", credential: "muazkh" }
+];
+
+const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName }) => {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isCallActive, setIsCallActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [localParticipants, setLocalParticipants] = useState<AudioParticipant[]>(participants);
-
+  const [participants, setParticipants] = useState<AudioParticipant[]>([]);
   const [callDuration, setCallDuration] = useState(0);
+
+  const pcsRef = useRef<{ [id: string]: RTCPeerConnection }>({});
+  const wsRef = useRef<WebSocket | null>(null);
+  const localAudioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<number | null>(null);
 
   /* ================= TOGGLE MICROPHONE ================= */
@@ -32,10 +44,20 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setStream(mediaStream);
-        if (audioRef.current) audioRef.current.srcObject = mediaStream;
         setIsMicOn(true);
+
+        if (localAudioRef.current) {
+          localAudioRef.current.srcObject = mediaStream;
+          localAudioRef.current.muted = true; // avoid echo
+          await localAudioRef.current.play();
+        }
+
+        // Add track to all existing peers
+        Object.values(pcsRef.current).forEach(pc => {
+          mediaStream.getTracks().forEach(track => pc.addTrack(track, mediaStream));
+        });
       } catch (err) {
-        console.error("Mic access denied", err);
+        console.error("Mic access denied:", err);
       }
     } else {
       stream?.getTracks().forEach(track => track.stop());
@@ -44,42 +66,158 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
     }
   };
 
-  /* ================= TOGGLE PARTICIPANT MUTE ================= */
-  const toggleParticipantMute = (id: string) => {
-    setLocalParticipants(prev =>
-      prev.map(p => (p.id === id ? { ...p, muted: !p.muted } : p))
-    );
+  /* ================= CREATE PEER CONNECTION ================= */
+  const createPeerConnection = (peerId: string) => {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+    // Send ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        wsRef.current?.send(JSON.stringify({
+          type: "ice",
+          candidate: event.candidate,
+          from: userId,
+          to: peerId
+        }));
+      }
+    };
+
+    // Receive remote audio
+    pc.ontrack = (event) => {
+      setParticipants(prev => {
+        const exists = prev.find(p => p.id === peerId);
+        if (!exists) {
+          return [...prev, { id: peerId, name: peerId, stream: event.streams[0] }];
+        } else {
+          exists.stream = event.streams[0];
+          return [...prev];
+        }
+      });
+    };
+
+    // Add local tracks
+    if (stream) {
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    }
+
+    return pc;
   };
 
-  /* ================= START / END CALL ================= */
+  /* ================= HANDLE SIGNALING ================= */
+  const handleWSMessage = async (event: MessageEvent) => {
+    const data = JSON.parse(event.data);
+    const { type, from, to, sdp, candidate, name } = data;
+
+    if (from === userId) return;
+    if (to && to !== userId) return;
+
+    if (type === "join") {
+      if (!pcsRef.current[from]) {
+        const pc = createPeerConnection(from);
+        pcsRef.current[from] = pc;
+
+        setParticipants(prev => {
+          if (!prev.find(p => p.id === from)) return [...prev, { id: from, name }];
+          return prev;
+        });
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        wsRef.current?.send(JSON.stringify({
+          type: "offer",
+          sdp: offer,
+          from: userId,
+          to: from
+        }));
+      }
+    }
+
+    if (type === "offer") {
+      const pc = createPeerConnection(from);
+      pcsRef.current[from] = pc;
+
+      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      wsRef.current?.send(JSON.stringify({
+        type: "answer",
+        sdp: answer,
+        from: userId,
+        to: from
+      }));
+
+      setParticipants(prev => {
+        if (!prev.find(p => p.id === from)) return [...prev, { id: from, name }];
+        return prev;
+      });
+    }
+
+    if (type === "answer") {
+      const pc = pcsRef.current[from];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+    }
+
+    if (type === "ice") {
+      const pc = pcsRef.current[from];
+      if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  };
+
+  /* ================= START CALL ================= */
   const startCall = () => {
     setIsCallActive(true);
     setCallDuration(0);
+
+    wsRef.current = new WebSocket(`${process.env.NEXT_PUBLIC_FIBER_WEBSOCKET_URL}/ws/voice/${channelId}`);
+    wsRef.current.onopen = () => {
+      console.log("Connected to voice WebSocket");
+      setParticipants([{ id: userId, name: userName }]);
+
+      wsRef.current?.send(JSON.stringify({
+        type: "join",
+        from: userId,
+        name: userName
+      }));
+    };
+
+    wsRef.current.onmessage = handleWSMessage;
+
     timerRef.current = window.setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
   };
 
+  /* ================= END CALL ================= */
   const endCall = () => {
     setIsCallActive(false);
     setCallDuration(0);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+
+    Object.values(pcsRef.current).forEach(pc => pc.close());
+    pcsRef.current = {};
+
     stream?.getTracks().forEach(track => track.stop());
     setStream(null);
     setIsMicOn(false);
+
+    wsRef.current?.close();
+    wsRef.current = null;
+
+    setParticipants([]);
   };
 
-  useEffect(() => {
-    return () => {
-      stream?.getTracks().forEach(track => track.stop());
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [stream]);
+  /* ================= MUTE / UNMUTE ================= */
+  const toggleMuteParticipant = (id: string) => {
+    setParticipants(prev =>
+      prev.map(p => {
+        if (p.id === id) {
+          p.muted = !p.muted;
+        }
+        return p;
+      })
+    );
+  };
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -87,18 +225,23 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
     return `${m}:${s}`;
   };
 
+  useEffect(() => {
+    return () => {
+      Object.values(pcsRef.current).forEach(pc => pc.close());
+      stream?.getTracks().forEach(track => track.stop());
+      wsRef.current?.close();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [stream]);
+
   return (
-    <div className="flex-1 flex flex-col bg-linear-to-br from-gray-900 via-gray-800 to-gray-950 text-white">
+    <div className="flex-1 flex flex-col bg-gray-900 text-white">
       {/* HEADER */}
       <div className="p-4 flex items-center justify-between border-b border-gray-700">
         <h2 className="text-lg font-semibold">🎤 Voice Channel</h2>
         <div className="flex items-center gap-2">
           {isCallActive && <span className="text-sm">{formatTime(callDuration)}</span>}
-          <Button
-            size="sm"
-            variant={isMicOn ? "destructive" : "secondary"}
-            onClick={toggleMic}
-          >
+          <Button size="sm" variant={isMicOn ? "destructive" : "secondary"} onClick={toggleMic}>
             {isMicOn ? <Mic className="w-4 h-4 mr-1" /> : <MicOff className="w-4 h-4 mr-1" />}
             {isMicOn ? "Mic On" : "Mic Off"}
           </Button>
@@ -116,24 +259,34 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
 
       {/* PARTICIPANTS */}
       <ScrollArea className="flex-1 p-4 space-y-3">
-        {localParticipants.length === 0 ? (
+        {participants.length === 0 ? (
           <p className="text-sm text-gray-400">No one is in the channel yet 🎧</p>
         ) : (
-          localParticipants.map(p => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-gray-800/50 transition"
-            >
+          participants.map(p => (
+            <div key={p.id} className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-gray-800/50 transition">
               <div className="flex items-center gap-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{p.name[0]}</AvatarFallback>
+                  <AvatarFallback>{p.id[0]}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">{p.name}</span>
+                <span className="text-sm font-medium">{p.id}</span>
+
+                {/* Render remote audio */}
+                {p.stream && (
+                  <audio
+                    autoPlay
+                    ref={el => {
+                      if (el) {
+                        el.srcObject = p.stream!;
+                        el.muted = p.muted ?? false;
+                      }
+                    }}
+                  />
+                )}
               </div>
               <Button
                 size="icon"
                 variant={p.muted ? "destructive" : "secondary"}
-                onClick={() => toggleParticipantMute(p.id)}
+                onClick={() => toggleMuteParticipant(p.id)}
               >
                 {p.muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </Button>
@@ -142,7 +295,8 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ participants = [] }) => {
         )}
       </ScrollArea>
 
-      <audio ref={audioRef} className="hidden" autoPlay />
+      {/* Local audio */}
+      <audio ref={localAudioRef} autoPlay className="hidden" />
     </div>
   );
 };

@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Plus } from "lucide-react";
 import { fetchUser } from "@/app/utils/fetchUser";
 import { useRouter } from "next/navigation";
@@ -13,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import NavigationModal from "../modals/navigation-modal";
 import { User } from "@/app/model/user/user";
+import { User2Icon } from "lucide-react";
 
 const NavigationSidebar: React.FC = () => {
   const [servers, setServers] = useState<Server[]>([]);
@@ -38,7 +44,7 @@ const NavigationSidebar: React.FC = () => {
         // ✅ Filter servers: owned OR joined
         const userServers = allServers.filter(
           (server) =>
-            server.userID === currentUser.userID || 
+            server.userID === currentUser.userID ||
             server.members.some((m) => m.userID === currentUser.userID)
         );
 
@@ -90,7 +96,10 @@ const NavigationSidebar: React.FC = () => {
                   <Plus />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" className="text-green-600 font-medium">
+              <TooltipContent
+                side="right"
+                className="text-green-600 font-medium"
+              >
                 Create Server
               </TooltipContent>
             </Tooltip>
@@ -119,7 +128,9 @@ const NavigationSidebar: React.FC = () => {
                       >
                         <Avatar className="w-full h-full">
                           <AvatarImage src={server.imageURL} />
-                          <AvatarFallback>{server.name?.[0] ?? "?"}</AvatarFallback>
+                          <AvatarFallback>
+                            {server.name?.[0] ?? "?"}
+                          </AvatarFallback>
                         </Avatar>
                       </Button>
                     </TooltipTrigger>
@@ -137,8 +148,10 @@ const NavigationSidebar: React.FC = () => {
             size="icon"
             className="w-12 h-12 rounded-full border border-amber-800 bg-amber-700 text-amber-50 hover:bg-amber-800 transition-all"
           >
-            <Avatar className="w-full h-full">
-              <AvatarFallback className="font-bold text-lg">E</AvatarFallback>
+            <Avatar className="w-full h-full bg-red-500!">
+              <AvatarFallback className="flex items-center justify-center bg-red-700">
+                <User2Icon className="w-6 h-6 text-white" />
+              </AvatarFallback>
             </Avatar>
           </Button>
         </div>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -29,7 +29,9 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
-  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, Message[]>>({});
+  const [messagesByChannel, setMessagesByChannel] = useState<
+    Record<string, Message[]>
+  >({});
 
   const [text, setText] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
@@ -140,7 +142,6 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
 
         {/* ================= CHANNEL LIST ================= */}
         <ScrollArea className="flex-1 px-2 m-3 space-y-4">
-
           {/* TEXT CHANNELS */}
           {groupedChannels.TEXT.length > 0 && (
             <div>
@@ -150,7 +151,9 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
               {groupedChannels.TEXT.map((channel) => (
                 <Button
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
+                  variant={
+                    activeChannelId === channel.id ? "secondary" : "ghost"
+                  }
                   className="w-full justify-start mb-1"
                   onClick={() => setActiveChannelId(channel.id)}
                 >
@@ -169,7 +172,9 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
               {groupedChannels.AUDIO.map((channel) => (
                 <Button
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
+                  variant={
+                    activeChannelId === channel.id ? "secondary" : "ghost"
+                  }
                   className="w-full justify-start mb-1"
                   onClick={() => setActiveChannelId(channel.id)}
                 >
@@ -188,7 +193,9 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
               {groupedChannels.VIDEO.map((channel) => (
                 <Button
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
+                  variant={
+                    activeChannelId === channel.id ? "secondary" : "ghost"
+                  }
                   className="w-full justify-start mb-1"
                   onClick={() => setActiveChannelId(channel.id)}
                 >
@@ -197,7 +204,6 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
               ))}
             </div>
           )}
-
         </ScrollArea>
       </aside>
 
@@ -251,8 +257,14 @@ const ServerIdPage: React.FC = (): React.JSX.Element => {
           </>
         )}
 
-        {activeChannel?.type === "AUDIO" && <AudioChannel />}
-        {activeChannel?.type === "VIDEO" && <VideoChannel />}
+        {activeChannel?.type === "AUDIO" && (
+          <AudioChannel
+            channelId={activeChannel.id}
+            userId={server.userID}
+            userName={server.profile.name}
+          />
+        )}
+        {activeChannel?.type === "VIDEO" && <VideoChannel channelId={activeChannel.id} />}
       </main>
 
       {/* ================= MEMBERS ================= */}
