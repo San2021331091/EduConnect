@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Phone, PhoneOff } from "lucide-react";
+import { Server } from "@/app/model/server/server";
 
 interface AudioParticipant {
   id: string;
@@ -16,7 +17,7 @@ interface AudioParticipant {
 interface AudioChannelProps {
   channelId: string;
   userId: string;
-  userName: string;
+  server: Server;
 }
 
 // ✅ STUN + free TURN server
@@ -26,7 +27,7 @@ const ICE_SERVERS = [
   { urls: "turn:numb.viagenie.ca", username: "webrtc@live.com", credential: "muazkh" }
 ];
 
-const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName }) => {
+const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, server }) => {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isCallActive, setIsCallActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -38,6 +39,12 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
   const localAudioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<number | null>(null);
 
+  // ✅ Get member name from server members
+  const getMemberName = (memberId: string) => {
+    const member = server.members.find((m) => m.profile?.userID === memberId);
+    return member?.profile?.name || member?.role || "Unknown";
+  };
+
   /* ================= TOGGLE MICROPHONE ================= */
   const toggleMic = async () => {
     if (!isMicOn) {
@@ -48,7 +55,7 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
 
         if (localAudioRef.current) {
           localAudioRef.current.srcObject = mediaStream;
-          localAudioRef.current.muted = true; // avoid echo
+          localAudioRef.current.muted = true;
           await localAudioRef.current.play();
         }
 
@@ -70,7 +77,6 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
   const createPeerConnection = (peerId: string) => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
-    // Send ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         wsRef.current?.send(JSON.stringify({
@@ -82,12 +88,11 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
       }
     };
 
-    // Receive remote audio
     pc.ontrack = (event) => {
       setParticipants(prev => {
         const exists = prev.find(p => p.id === peerId);
         if (!exists) {
-          return [...prev, { id: peerId, name: peerId, stream: event.streams[0] }];
+          return [...prev, { id: peerId, name: getMemberName(peerId), stream: event.streams[0] }];
         } else {
           exists.stream = event.streams[0];
           return [...prev];
@@ -95,7 +100,6 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
       });
     };
 
-    // Add local tracks
     if (stream) {
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
     }
@@ -117,8 +121,13 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
         pcsRef.current[from] = pc;
 
         setParticipants(prev => {
-          if (!prev.find(p => p.id === from)) return [...prev, { id: from, name }];
-          return prev;
+          if (!prev.find(p => p.id === from)) {
+            return [...prev, { id: from, name: name || getMemberName(from) }];
+          }
+          return prev.map(p => {
+            if (p.id === from) p.name = name || getMemberName(from);
+            return p;
+          });
         });
 
         const offer = await pc.createOffer();
@@ -149,8 +158,13 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
       }));
 
       setParticipants(prev => {
-        if (!prev.find(p => p.id === from)) return [...prev, { id: from, name }];
-        return prev;
+        if (!prev.find(p => p.id === from)) {
+          return [...prev, { id: from, name: name || getMemberName(from) }];
+        }
+        return prev.map(p => {
+          if (p.id === from) p.name = name || getMemberName(from);
+          return p;
+        });
       });
     }
 
@@ -173,12 +187,12 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
     wsRef.current = new WebSocket(`${process.env.NEXT_PUBLIC_FIBER_WEBSOCKET_URL}/ws/voice/${channelId}`);
     wsRef.current.onopen = () => {
       console.log("Connected to voice WebSocket");
-      setParticipants([{ id: userId, name: userName }]);
+      setParticipants([{ id: userId, name: getMemberName(userId) }]);
 
       wsRef.current?.send(JSON.stringify({
         type: "join",
         from: userId,
-        name: userName
+        name: getMemberName(userId)
       }));
     };
 
@@ -211,9 +225,7 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
   const toggleMuteParticipant = (id: string) => {
     setParticipants(prev =>
       prev.map(p => {
-        if (p.id === id) {
-          p.muted = !p.muted;
-        }
+        if (p.id === id) p.muted = !p.muted;
         return p;
       })
     );
@@ -266,9 +278,9 @@ const AudioChannel: React.FC<AudioChannelProps> = ({ channelId, userId, userName
             <div key={p.id} className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-gray-800/50 transition">
               <div className="flex items-center gap-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{p.id[0]}</AvatarFallback>
+                  <AvatarFallback>{p.name?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">{p.id}</span>
+                <span className="text-sm font-medium">{p.name}</span>
 
                 {/* Render remote audio */}
                 {p.stream && (

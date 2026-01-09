@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Server } from "@/app/model/server/server";
+import ChatBotWidget from "../ChatboxWidget";
 
 interface TextChannelProps {
   channelId: string;
@@ -243,6 +244,7 @@ const TextChannel: React.FC<TextChannelProps> = ({
           </div>
         </div>
       </div>
+      <ChatBotWidget/>
     </div>
   );
 };

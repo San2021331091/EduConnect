@@ -178,15 +178,17 @@ const ServerGet: React.FC = (): React.JSX.Element => {
 
         {activeChannel?.type === "AUDIO" && (
           <AudioChannel
-            channelId={activeChannel.id}
-            userId={currentUser.userID}    
-            userName={currentUser.email}
+            channelId={activeChannel?.id}
+            userId={currentUser?.userID}    
+            server = {server}
           />
         )}
 
         {activeChannel?.type === "VIDEO" && (
           <VideoChannel
-            channelId={activeChannel.id}
+             channelId={activeChannel?.id}
+            userId={currentUser?.userID}    
+             server={server}  
           />
         )}
       </main>

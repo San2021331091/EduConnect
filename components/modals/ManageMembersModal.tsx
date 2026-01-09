@@ -140,7 +140,7 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                 <div>
                   <p className="text-sm font-medium">{member.role}</p>
                   <p className="text-xs text-muted-foreground">
-                    {member.profileID}
+                    {member.profile.name}
                   </p>
                 </div>
               </div>
