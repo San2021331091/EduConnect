@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduConnect App",
-  description: "A modern app for students",
+  title: {default:"EduConnect",template:"EduConnect | %s"},
+  description: "A modern website for students",
 };
 
 export default function RootLayout({

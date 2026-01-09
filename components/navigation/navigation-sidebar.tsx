@@ -20,7 +20,7 @@ import NavigationModal from "../modals/navigation-modal";
 import { User } from "@/app/model/user/user";
 import { User2Icon } from "lucide-react";
 
-const NavigationSidebar: React.FC = () => {
+const NavigationSidebar: React.FC = ():React.JSX.Element => {
   const [servers, setServers] = useState<Server[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,8 +88,8 @@ const NavigationSidebar: React.FC = () => {
                     "w-12 h-12 rounded-full border border-blue-300 dark:border-zinc-700",
                     "bg-blue-100 dark:bg-zinc-800",
                     "text-blue-900 dark:text-zinc-100",
-                    "hover:bg-green-600 hover:text-white",
-                    "data-[active=true]:bg-green-600 data-[active=true]:text-white",
+                    "hover:bg-green-600! hover:text-white",
+                    "data-[active=true]:bg-green-600! data-[active=true]:text-white",
                     "transition-all"
                   )}
                 >
@@ -98,7 +98,7 @@ const NavigationSidebar: React.FC = () => {
               </TooltipTrigger>
               <TooltipContent
                 side="right"
-                className="text-green-600 font-medium"
+                className="bg-green-600 text-white font-medium"
               >
                 Create Server
               </TooltipContent>
@@ -121,20 +121,20 @@ const NavigationSidebar: React.FC = () => {
                         className={cn(
                           "w-12 h-12 rounded-full overflow-hidden border border-blue-300 dark:border-zinc-700",
                           "bg-blue-100 dark:bg-zinc-800",
-                          "hover:bg-green-600 hover:text-white hover:rounded-xl",
-                          "data-[active=true]:bg-green-600 data-[active=true]:text-white",
+                          "hover:bg-red-600! hover:text-white! hover:rounded-xl",
+                          "data-[active=true]:bg-green-600! data-[active=true]:text-white",
                           "transition-all"
                         )}
                       >
                         <Avatar className="w-full h-full">
-                          <AvatarImage src={server.imageURL} />
+                          <AvatarImage src={server?.imageURL} />
                           <AvatarFallback>
-                            {server.name?.[0] ?? "?"}
+                            {server?.name?.[0] ?? "?"}
                           </AvatarFallback>
                         </Avatar>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="right">{server.name}</TooltipContent>
+                    <TooltipContent side="right" className="bg-red-500 text-white">{server.name}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               ))}
@@ -148,7 +148,7 @@ const NavigationSidebar: React.FC = () => {
             size="icon"
             className="w-12 h-12 rounded-full border border-amber-800 bg-amber-700 text-amber-50 hover:bg-amber-800 transition-all"
           >
-            <Avatar className="w-full h-full bg-red-500!">
+            <Avatar className="w-full h-full bg-red-500!" onClick={ () => router.push(`/profile/${user.userID}`)}>
               <AvatarFallback className="flex items-center justify-center bg-red-700">
                 <User2Icon className="w-6 h-6 text-white" />
               </AvatarFallback>

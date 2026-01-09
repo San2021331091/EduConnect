@@ -23,7 +23,7 @@ export function CircularProgress({
     <svg
       width={size}
       height={size}
-      className={cn("rotate-[-90deg]", className)}
+      className={cn("-rotate-90", className)}
     >
       {/* Background Track */}
       <circle

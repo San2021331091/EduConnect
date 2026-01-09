@@ -1,4 +1,3 @@
-'use client';
 import { getUser } from '@/auth/auth';
 import { User } from '../model/user/user';
 
