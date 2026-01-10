@@ -64,7 +64,7 @@ The platform uses a modern **frontend stack** for responsive, intuitive UI, a sc
 
 ## **4. Technology Stack**
 
-### **4.1 Frontend **
+### **4.1 Frontend**
 
 * **Next.js v16.1.1** – React framework for server-side rendering, routing, and API routes.
 * **React v19.2.3 + TypeScript v5** – Component-driven architecture with type safety for scalable code.
@@ -96,7 +96,7 @@ The platform uses a modern **frontend stack** for responsive, intuitive UI, a sc
 
 ---
 
-### **4.2 Backend (fiber-backend) **
+### **4.2 Backend**
 
 **Core Backend Stack:**
 
@@ -147,7 +147,7 @@ go run main.go
 
 ---
 
-### **4.3 Admin Panel – Directus **
+### **4.3 Admin Panel – Directus**
 
 **Directus** is used as the **headless CMS and admin panel** for EduConnect.
 
