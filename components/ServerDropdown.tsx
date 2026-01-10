@@ -76,7 +76,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ====================== MENU ITEMS ======================
+  // ====================== MENU ITEMS FOR USERS ======================
   const menuItems = [];
 
   // Everyone can invite people
