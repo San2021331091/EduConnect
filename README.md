@@ -146,6 +146,12 @@ go run main.go
 ```
 
 ---
+# Backend URL
+
+The backend for this project is hosted at:
+
+**URL:** [https://fiber-backend-hcdj.onrender.com/](https://fiber-backend-hcdj.onrender.com/)
+
 
 ### **4.3 Admin Panel – Directus**
 
