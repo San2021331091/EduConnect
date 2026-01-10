@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,13 @@ import { useRouter } from "next/navigation";
 
 interface ServerDropdownProps {
   server: Server;
+  setServer: React.Dispatch<React.SetStateAction<Server | null>>; // new
 }
 
-const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
+const ServerDropdown: React.FC<ServerDropdownProps> = ({
+  server,
+  setServer,
+}) => {
   const serverName = server.name;
   const inviteLink = `${window.location.origin}/invite/${server.inviteCode}`;
   const [open, setOpen] = useState(false);
@@ -83,7 +87,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
   });
 
   // Admin-only items
-  if (memberRole === "ADMIN") {
+  if (memberRole === MemberRole.ADMIN) {
     menuItems.push(
       {
         label: "Server Settings",
@@ -110,13 +114,30 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
   }
 
   // Only MODERATOR or GUEST can leave the server
-  if (memberRole !== "ADMIN") {
+  if (memberRole !== MemberRole.ADMIN) {
     menuItems.push({
       label: "Leave Server",
       icon: <LogOut className="h-4 w-4 mr-2" />,
       onClick: () => setIsLeaveServerOpen(true),
       danger: true,
     });
+  }
+
+  //Moderator Only
+
+  if (memberRole === MemberRole.MODERATOR) {
+    menuItems.push(
+      {
+        label: "Server Settings",
+        icon: <Settings className="h-4 w-4 mr-2" />,
+        onClick: () => setIsSettingsOpen(true),
+      },
+      {
+        label: "Create Channel",
+        icon: <PlusCircle className="h-4 w-4 mr-2" />,
+        onClick: () => setIsCreateChannelOpen(true),
+      }
+    );
   }
 
   return (
@@ -164,6 +185,9 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         onClose={() => setIsSettingsOpen(false)}
         serverName={serverName}
         serverId={server.id}
+        onUpdate={(newName) => {
+          setServer((prev) => (prev ? { ...prev, name: newName } : prev));
+        }}
       />
       <ManageMembersModal
         isOpen={isManageMembersOpen}
@@ -174,7 +198,13 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         isOpen={isCreateChannelOpen}
         onClose={() => setIsCreateChannelOpen(false)}
         serverID={server.id}
+        onChannelCreated={(newChannel) => {
+          setServer((prev) =>
+            prev ? { ...prev, channels: [...prev.channels, newChannel] } : prev
+          );
+        }}
       />
+
       <DeleteServerModal
         isOpen={isDeleteServerOpen}
         onClose={() => setIsDeleteServerOpen(false)}
@@ -186,7 +216,7 @@ const ServerDropdown: React.FC<ServerDropdownProps> = ({ server }) => {
         onClose={() => setIsLeaveServerOpen(false)}
         serverName={serverName}
         serverMembers={server.members}
-        onLeave={() => router.push("/") }
+        onLeave={() => router.push("/")}
       />
     </div>
   );

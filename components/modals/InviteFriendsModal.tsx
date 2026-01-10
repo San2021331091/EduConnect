@@ -35,7 +35,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({ isOpen, onClose
 
           <div className="flex gap-2">
             <Input value={inviteLink} readOnly className="flex-1" />
-            <Button onClick={handleCopy} size="sm">
+            <Button className='bg-green-700 text-white' onClick={handleCopy} size="sm">
               <Copy className="h-4 w-4 mr-1" />
               {copied ? 'Copied!' : 'Copy'}
             </Button>
@@ -43,7 +43,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({ isOpen, onClose
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="secondary" onClick={onClose}>
+          <Button className='bg-orange-600 text-white'  onClick={onClose}>
             Close
           </Button>
         </DialogFooter>

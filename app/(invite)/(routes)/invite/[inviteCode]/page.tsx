@@ -16,7 +16,7 @@ const InviteCodePage: React.FC = (): React.JSX.Element => {
         // Call backend to join server
         const token = localStorage.getItem('jwt'); 
         if (!token) {
-          router.replace('/login');
+          router.replace('/sign-in');
           return;
         }
 

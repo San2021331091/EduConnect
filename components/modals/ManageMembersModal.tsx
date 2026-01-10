@@ -133,14 +133,14 @@ const ManageMembersModal: React.FC<ManageMembersModalProps> = ({
                     className="text-white font-bold flex items-center justify-center"
                     style={{ background: stringToGradient(member.userID) }}
                   >
-                    {member.role[0]}
+                    {member?.role[0]}
                   </AvatarFallback>
                 </Avatar>
 
                 <div>
-                  <p className="text-sm font-medium">{member.role}</p>
+                  <p className="text-sm font-medium">{member?.role}</p>
                   <p className="text-xs text-muted-foreground">
-                    {member.profile.name}
+                    {member?.profile?.name}
                   </p>
                 </div>
               </div>

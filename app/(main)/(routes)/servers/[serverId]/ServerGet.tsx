@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { fetchServerById } from "@/app/utils/fetchServerById";
-import { fetchUser } from "@/app/utils/fetchUser"; 
+import { fetchUser } from "@/app/utils/fetchUser";
 import { Server } from "@/app/model/server/server";
 import { User } from "@/app/model/user/user";
 
@@ -22,6 +22,12 @@ import TextChannel from "@/components/channels/TextChannel";
 import AudioChannel from "@/components/channels/AudioChannel";
 import VideoChannel from "@/components/channels/VideoChannel";
 
+import { Pencil, Trash2 } from "lucide-react";
+import { Channel } from "@/app/model/channels/channels";
+import EditChannelModal from "@/components/modals/EditChannelModal";
+import DeleteChannelAlert from "@/components/modals/DeleteChannelAlert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 const ServerGet: React.FC = (): React.JSX.Element => {
   const params = useParams<{ serverId: string }>();
 
@@ -29,44 +35,85 @@ const ServerGet: React.FC = (): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null); // ✅ logged-in user
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [editModalChannel, setEditModalChannel] = useState<Channel | null>(
+    null
+  );
+  const [deleteModalChannel, setDeleteModalChannel] = useState<Channel | null>(
+    null
+  );
 
   const [channelSearch, setChannelSearch] = useState<string>("");
+  const [showWelcome, setShowWelcome] = useState<boolean>(false);
 
   /* ================= LOAD SERVER & USER ================= */
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
 
-      const [serverData, userData] = await Promise.all([
-        params?.serverId ? fetchServerById(params.serverId) : null,
-        fetchUser()
-      ]);
+      const user = await fetchUser();
+      setCurrentUser(user);
 
+      // If serverId === user.userID, show welcome alert instead of fetching server
+      if (params?.serverId === user?.userID) {
+        setShowWelcome(true);
+        setServer(null); // no server yet
+        setActiveChannelId(null);
+        setLoading(false);
+        return;
+      }
+      
+
+      // Otherwise, fetch server normally
+      const serverData = params?.serverId
+        ? await fetchServerById(params?.serverId)
+        : null;
       setServer(serverData);
-      setCurrentUser(userData);
       setActiveChannelId(serverData?.channels[0]?.id ?? null);
       setLoading(false);
     };
 
     loadData();
-  }, [params.serverId]);
+  }, [params?.serverId]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
-        <CircularProgress value={50} size={60} strokeWidth={6} className="text-blue-500" />
+        <CircularProgress
+          value={50}
+          size={60}
+          strokeWidth={6}
+          className="text-blue-500"
+        />
       </div>
     );
   }
-
-  if (!server || !currentUser) {
+ 
+  if (showWelcome && currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="w-full max-w-md px-4">
+          <Alert>
+            <AlertTitle>Welcome!</AlertTitle>
+            <AlertDescription>
+              Welcome to your server! Start by creating channels to invite your
+              friends.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+  if (!server || !currentUser ) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-muted-foreground">
         Server or user not found
       </div>
     );
   }
+
+ 
+
 
   const activeChannel = server.channels.find((c) => c.id === activeChannelId);
 
@@ -87,7 +134,7 @@ const ServerGet: React.FC = (): React.JSX.Element => {
       {/* ================= CHANNEL SIDEBAR ================= */}
       <aside className="w-64 border bg-muted/40">
         <div className="p-4 font-semibold">
-          <ServerDropdown server={server} />
+          <ServerDropdown server={server} setServer={setServer} />
         </div>
 
         <Separator />
@@ -102,56 +149,142 @@ const ServerGet: React.FC = (): React.JSX.Element => {
         </div>
 
         <ScrollArea className="flex-1 px-2 m-3 space-y-4">
+          {/* ================= TEXT CHANNELS ================= */}
           {groupedChannels.TEXT.length > 0 && (
             <div>
               <p className="px-2 mb-1 text-xs font-semibold text-muted-foreground">
                 TEXT CHANNELS
               </p>
-              {groupedChannels.TEXT.map((channel) => (
-                <Button
+              {groupedChannels.TEXT.map((channel: Channel) => (
+                <div
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-1"
-                  onClick={() => setActiveChannelId(channel.id)}
+                  className="relative flex items-center w-full justify-between mb-1 group"
                 >
-                  {channel.name.toUpperCase()}
-                </Button>
+                  <Button
+                    variant={
+                      activeChannelId === channel.id ? "secondary" : "ghost"
+                    }
+                    className="w-full justify-start"
+                    onClick={() => setActiveChannelId(channel.id)}
+                  >
+                    {channel.name.toUpperCase()}
+                  </Button>
+
+                  {/* Edit Icon */}
+                  <Pencil
+                    size={16}
+                    className="absolute right-8 hidden group-hover:block cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditModalChannel(channel)}
+                  />
+
+                  {/* Delete Icon */}
+
+                  <Trash2
+                    size={16}
+                    className={`absolute right-2 hidden group-hover:block cursor-pointer text-red-500 hover:text-red-600 ${
+                      server.channels.length === 1
+                        ? "opacity-40 cursor-not-allowed hover:text-red-500"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (server.channels.length > 1)
+                        setDeleteModalChannel(channel);
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
 
+          {/* ================= AUDIO CHANNELS ================= */}
           {groupedChannels.AUDIO.length > 0 && (
             <div>
               <p className="px-2 mb-1 text-xs font-semibold text-muted-foreground">
                 AUDIO CHANNELS
               </p>
-              {groupedChannels.AUDIO.map((channel) => (
-                <Button
+              {groupedChannels.AUDIO.map((channel: Channel) => (
+                <div
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-1"
-                  onClick={() => setActiveChannelId(channel.id)}
+                  className="relative flex items-center w-full justify-between mb-1 group"
                 >
-                  🔊 {channel.name.toUpperCase()}
-                </Button>
+                  <Button
+                    variant={
+                      activeChannelId === channel.id ? "secondary" : "ghost"
+                    }
+                    className="w-full justify-start"
+                    onClick={() => setActiveChannelId(channel.id)}
+                  >
+                    🔊 {channel.name.toUpperCase()}
+                  </Button>
+
+                  {/* Edit Icon */}
+                  <Pencil
+                    size={16}
+                    className="absolute right-8 hidden group-hover:block cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditModalChannel(channel)}
+                  />
+
+                  {/* Delete Icon */}
+                  <Trash2
+                    size={16}
+                    className={`absolute right-2 hidden group-hover:block cursor-pointer text-red-500 hover:text-red-600 ${
+                      server.channels.length === 1
+                        ? "opacity-40 cursor-not-allowed hover:text-red-500"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (server.channels.length > 1)
+                        setDeleteModalChannel(channel);
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
 
+          {/* ================= VIDEO CHANNELS ================= */}
           {groupedChannels.VIDEO.length > 0 && (
             <div>
               <p className="px-2 mb-1 text-xs font-semibold text-muted-foreground">
                 VIDEO CHANNELS
               </p>
-              {groupedChannels.VIDEO.map((channel) => (
-                <Button
+              {groupedChannels.VIDEO.map((channel: Channel) => (
+                <div
                   key={channel.id}
-                  variant={activeChannelId === channel.id ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-1"
-                  onClick={() => setActiveChannelId(channel.id)}
+                  className="relative flex items-center w-full justify-between mb-1 group"
                 >
-                  📹 {channel.name.toUpperCase()}
-                </Button>
+                  <Button
+                    variant={
+                      activeChannelId === channel.id ? "secondary" : "ghost"
+                    }
+                    className="w-full justify-start"
+                    onClick={() => setActiveChannelId(channel.id)}
+                  >
+                    📹 {channel.name.toUpperCase()}
+                  </Button>
+
+                  {/* Edit Icon */}
+                  <Pencil
+                    size={16}
+                    className="absolute right-8 hidden group-hover:block cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditModalChannel(channel)}
+                  />
+
+                  {/* Delete Icon */}
+
+                  <Trash2
+                    size={16}
+                    className={`absolute right-2 hidden group-hover:block cursor-pointer text-red-500 hover:text-red-600 ${
+                      server.channels.length === 1
+                        ? "opacity-40 cursor-not-allowed hover:text-red-500"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (server.channels.length > 1)
+                        setDeleteModalChannel(channel);
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -171,24 +304,24 @@ const ServerGet: React.FC = (): React.JSX.Element => {
         {activeChannel?.type === "TEXT" && (
           <TextChannel
             channelId={activeChannel?.id}
-            userId={currentUser?.userID}    
-             server={server}  
+            userId={currentUser?.userID}
+            server={server}
           />
         )}
 
         {activeChannel?.type === "AUDIO" && (
           <AudioChannel
             channelId={activeChannel?.id}
-            userId={currentUser?.userID}    
-            server = {server}
+            userId={currentUser?.userID}
+            server={server}
           />
         )}
 
         {activeChannel?.type === "VIDEO" && (
           <VideoChannel
-             channelId={activeChannel?.id}
-            userId={currentUser?.userID}    
-             server={server}  
+            channelId={activeChannel?.id}
+            userId={currentUser?.userID}
+            server={server}
           />
         )}
       </main>
@@ -226,6 +359,48 @@ const ServerGet: React.FC = (): React.JSX.Element => {
           );
         })}
       </aside>
+      {/* EDIT MODAL */}
+      {editModalChannel && (
+        <EditChannelModal
+          channelId={editModalChannel.id}
+          initialName={editModalChannel.name}
+          onUpdate={(newName) => {
+            setServer((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    channels: prev.channels.map((c) =>
+                      c.id === editModalChannel.id ? { ...c, name: newName } : c
+                    ),
+                  }
+                : prev
+            );
+          }}
+          onClose={() => setEditModalChannel(null)} // modal disappears
+        />
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteModalChannel && (
+        <DeleteChannelAlert
+          channelId={deleteModalChannel.id}
+          onDelete={() => {
+            setServer((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    channels: prev.channels.filter(
+                      (c) => c.id !== deleteModalChannel.id
+                    ),
+                  }
+                : prev
+            );
+            if (activeChannelId === deleteModalChannel.id)
+              setActiveChannelId(null);
+          }}
+          onClose={() => setDeleteModalChannel(null)} // closes the modal
+        />
+      )}
     </div>
   );
 };

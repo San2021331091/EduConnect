@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ChannelType } from '@/app/model/channels/channels';
+import { Channel, ChannelType } from '@/app/model/channels/channels';
 import axios from 'axios';
 import { fetchUser } from '@/app/utils/fetchUser';
 
@@ -20,7 +20,7 @@ interface CreateChannelModalProps {
   isOpen: boolean;
   onClose: () => void;
   serverID: string;
-  onChannelCreated?: () => void; // optional callback to refresh channel list
+  onChannelCreated?: (newChannel: Channel) => void; 
 }
 
 const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
@@ -60,24 +60,29 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
 
       const token = localStorage.getItem('jwt');
 
-      await axios.post(
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_FIBER_URL}/channels`,
         {
           name: channelName.trim(),
           type: channelType,
           serverID,
-          profileID, // send userID as profileID
+          profileID,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      setAlertMessage(`Channel "${channelName}" created successfully!`);
+      const newChannel = res.data; // ✅ newly created channel object
+
+      setAlertMessage(`Channel "${newChannel.name}" created successfully!`);
       setChannelName('');
       setChannelType(ChannelType.TEXT);
 
-      if (onChannelCreated) onChannelCreated();
+      // Call parent callback to update channel list
+      if (onChannelCreated) onChannelCreated(newChannel);
+
+      onClose(); // close modal
     } catch (err) {
       console.error(err);
       setAlertMessage('Failed to create channel.');
@@ -96,7 +101,9 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
         {/* Alert */}
         {alertMessage && (
           <Alert className="mb-4">
-            <AlertTitle>{alertMessage.includes('Failed') ? 'Error' : 'Success'}</AlertTitle>
+            <AlertTitle>
+              {alertMessage.includes('Failed') ? 'Error' : 'Success'}
+            </AlertTitle>
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
@@ -144,7 +151,11 @@ const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
           <Button variant="destructive" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button className="bg-blue-600 text-white" onClick={handleCreate} disabled={loading}>
+          <Button
+            className="bg-blue-600 text-white"
+            onClick={handleCreate}
+            disabled={loading}
+          >
             {loading ? 'Creating...' : 'Create'}
           </Button>
         </DialogFooter>

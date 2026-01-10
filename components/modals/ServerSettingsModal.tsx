@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface ServerSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  serverId: string;        // server ID is required for the API call
+  serverId: string;
   serverName: string;
-  onUpdate?: (newName: string) => void; // callback to update parent state
+  onUpdate?: (newName: string) => void;
 }
 
 const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
@@ -24,8 +30,15 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
   const [name, setName] = useState(serverName);
   const [isSaving, setIsSaving] = useState(false);
 
+  // ✅ FIX: keep input in sync with latest server name
+  useEffect(() => {
+    if (isOpen) {
+      setName(serverName);
+    }
+  }, [serverName, isOpen]);
+
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || name === serverName) return;
 
     setIsSaving(true);
     try {
@@ -34,7 +47,7 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
 
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_FIBER_URL}/servers/${serverId}`,
-        { name }, // send only the updated name
+        { name },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -42,8 +55,8 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
         }
       );
 
-      // Optional: update parent state immediately
-      if (onUpdate) onUpdate(data.name);
+      // ✅ update parent state
+      onUpdate?.(data.name);
 
       onClose();
     } catch (err) {
@@ -55,7 +68,7 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Server Settings</DialogTitle>
@@ -66,7 +79,7 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
             <label className="text-sm font-medium">Server Name</label>
             <Input
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Server Name"
               disabled={isSaving}
             />
@@ -74,10 +87,18 @@ const ServerSettingsModal: React.FC<ServerSettingsModalProps> = ({
         </div>
 
         <DialogFooter className="mt-4 flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={isSaving}>
+          <Button
+            className="bg-green-600! text-white!"
+            onClick={onClose}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button
+            className="bg-blue-600! text-white"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>

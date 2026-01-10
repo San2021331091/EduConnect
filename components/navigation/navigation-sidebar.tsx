@@ -23,9 +23,9 @@ import { User2Icon } from "lucide-react";
 const NavigationSidebar: React.FC = ():React.JSX.Element => {
   const [servers, setServers] = useState<Server[]>([]);
   const [active, setActive] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
 
