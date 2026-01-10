@@ -3,13 +3,13 @@ package models
 import "time"
 
 type MemberRole string
-
+// Define possible roles for a member
 const (
 	ADMIN     MemberRole = "ADMIN"
 	MODERATOR MemberRole = "MODERATOR"
 	GUEST     MemberRole = "GUEST"
 )
-
+// Member represents a user's membership in a server with a specific role
 type Member struct {
 	ID        string     `json:"id" gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Role      MemberRole `json:"role" gorm:"default:'GUEST'"`
