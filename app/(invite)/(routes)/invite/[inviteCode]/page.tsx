@@ -30,7 +30,7 @@ const InviteCodePage: React.FC = (): React.JSX.Element => {
           }
         );
 
-        // Redirect to the server page
+        // Go to the server page
         router.replace(`/servers/${server.id}`);
       } catch (error) {
         console.error('Invite join error found:', error);
