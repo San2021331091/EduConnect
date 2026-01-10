@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 
 interface ServerDropdownProps {
   server: Server;
-  setServer: React.Dispatch<React.SetStateAction<Server | null>>; // new
+  setServer: React.Dispatch<React.SetStateAction<Server | null>>;
 }
 
 const ServerDropdown: React.FC<ServerDropdownProps> = ({
