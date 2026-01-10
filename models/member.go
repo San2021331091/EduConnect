@@ -1,7 +1,7 @@
 package models
 
 import "time"
-
+// MemberRole defines the role of a member within a server
 type MemberRole string
 // Define possible roles for a member
 const (
