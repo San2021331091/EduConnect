@@ -38,10 +38,10 @@ Modern online learning platforms often lack academic-focused tools and intellige
 
 ### **Frontend**
 
-* **Next.js v16.1.1 **
+* **Next.js v16.1.1** 
 * **React + Tailwind CSS + Shadcn** – modern UI components
-* **TypeScript v5.9.3*
-* **HTML5**
+* **TypeScript v5.9.3**
+* **HTML5** 
 
 ### **Backend (Core API & Realtime)**
 
