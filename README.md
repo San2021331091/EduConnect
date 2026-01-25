@@ -296,5 +296,7 @@ EduConnect combines **frontend responsiveness**, **Go Fiber backend performance*
 
 ### **Submitted By**
 
-**Santosh Saha** – Registration No.: 2021331091
+**Santosh Saha** 
+– Registration No.: 2021331091
+
 **Harun Or Rashid Rasel** – Registration No.: 2021331075
