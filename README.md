@@ -11,7 +11,7 @@
 * **Shared resources and study materials**, including images, videos, and documents.
 * **Role-based access control** for personalized and secure experiences.
 
-The platform uses a modern **frontend stack** for responsive, intuitive UI, a scalable **Go Fiber backend** for real-time and core API functionalities, **PostgreSQL** for database management, **CX Genie** for AI services, and **Directus** for a robust admin panel.
+The platform uses a modern **frontend stack using next.js** for responsive, intuitive UI, a scalable **Go Fiber backend** for real-time and core API functionalities, **PostgreSQL** for database management, **CX Genie** for AI services, and **Directus** for a robust admin panel.
 
 ---
 
@@ -290,7 +290,7 @@ npx directus start
 
 ## **9. Conclusion**
 
-EduConnect combines **frontend responsiveness**, **Go Fiber backend performance**, **AI-powered learning**, **Directus admin control**, and **cloud-based file management** to deliver a complete student platform. Real-time chat, academic assistance, and role-based collaboration make EduConnect a next-generation learning platform for enhanced academic productivity.
+EduConnect combines **frontend responsiveness using next.js**, **Go Fiber backend performance**, **AI-powered learning**, **Directus admin control**, and **cloud-based file management** to deliver a complete student platform. Real-time chat, academic assistance, and role-based collaboration make EduConnect a next-generation learning platform for enhanced academic productivity.
 
 ---
 
