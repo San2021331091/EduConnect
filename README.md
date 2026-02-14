@@ -1,6 +1,4 @@
-
-
-# **EduConnect – A Web Platform for Students with AI Integration**
+# **EduConnect – A Web and Desktop Platform for Students with AI Integration**
 
 ## **1. Introduction**
 
@@ -276,6 +274,43 @@ npx directus start
 ```
 
 ---
+
+ **Electron Integration – EduConnect Desktop**
+
+**Purpose:**
+Electron is used to wrap the existing **Next.js frontend** into a **cross-platform desktop application** for Windows, macOS, and Linux, enabling offline capabilities and native desktop features.
+
+**Key Configuration:**
+
+* **Main Entry:** `dist-electron/main.js` – Electron’s main process file that loads the frontend.
+* **Build Scripts:**
+
+  * `electron:build` – Compiles Electron TypeScript files.
+  * `electron:start` – Builds and launches the Electron app.
+  * `dev:desktop` – Runs Next.js dev server and starts Electron after frontend is ready.
+  * `build:desktop` – Builds Next.js, compiles Electron, and packages the app using `electron-builder`.
+* **Dependencies:**
+
+  * `electron` – Core runtime for desktop app.
+  * `electron-builder` – Packaging and distribution for Windows/macOS/Linux.
+* **Build Config:**
+
+  * `appId`: `com.educonnect.app`
+  * `productName`: `EduConnect`
+  * `directories.output`: `dist`
+  * **Files Included:** `dist-electron/**/*`, `.next/**/*`, `public/**/*`, `package.json`
+  * **Windows Target:** NSIS installer for x64 architecture.
+  * **macOS/Linux:** Placeholder (`null`) – can be configured later.
+
+**Role in EduConnect:**
+
+* Converts web app into a desktop experience.
+* Maintains full functionality of AI-powered tools, chat, and resources offline or with local network.
+* Supports cross-platform deployment with a single codebase.
+
+---
+
+
 
 ## **8. Expected Outcomes**
 
