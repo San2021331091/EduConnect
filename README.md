@@ -148,7 +148,7 @@ go run main.go
 
 The backend for this project is hosted at:
 
-**URL:** [https://go-backend-sandy.vercel.app/](https://go-backend-sandy.vercel.app/)
+**URL:** [https://go-backend-e5ecbp0jk-cyber-crafters4.vercel.app/](https://go-backend-e5ecbp0jk-cyber-crafters4.vercel.app/)
 
 
 ### **4.3 Admin Panel – Directus**
