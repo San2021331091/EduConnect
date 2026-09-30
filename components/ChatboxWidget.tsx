@@ -4,9 +4,14 @@ import { useEffect } from "react";
 
 const ChatBotWidget = () => {
   useEffect(() => {
+    const widgetUrl = process.env.NEXT_PUBLIC_CXGENIE_WIDGET_URL;
+    const dataAid = process.env.NEXT_PUBLIC_CXGENIE_DATA_AID;
+
+    if (!widgetUrl || !dataAid) return;
+
     const script = document.createElement("script");
-    script.src = "https://widget.cxgenie.ai/widget.js";
-    script.setAttribute("data-aid", "14e301b4-fce7-4652-8d92-ee178d2865e9"); 
+    script.src = widgetUrl;
+    script.setAttribute("data-aid", dataAid);
     script.setAttribute("data-lang", "en");
     script.async = true;
     document.body.appendChild(script);
