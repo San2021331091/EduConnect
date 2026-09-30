@@ -148,7 +148,7 @@ go run main.go
 
 The backend for this project is hosted at:
 
-**URL:** [https://fiber-backend-hcdj.onrender.com/](https://fiber-backend-hcdj.onrender.com/)
+**URL:** [https://go-backend-sandy.vercel.app/](https://go-backend-sandy.vercel.app/)
 
 
 ### **4.3 Admin Panel – Directus**
